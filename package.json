@@ -20,6 +20,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.0",
     "multer": "^2.0.2",
-    "pdf-parse": "^2.1.7"
+    "pdf-parse": "^2.1.7",
+    "pdfreader": "^3.0.7"
   }
 }
