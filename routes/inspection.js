@@ -8,5 +8,9 @@ router.post('/process', inspectionController.process);
 // Updated verify route to send data to ML server for verification
 router.post('/verify', upload.single('icImage'), inspectionController.sendForMLVerification);
 router.get('/report', inspectionController.report);
+router.get('/dashboard', inspectionController.dashboard);
+router.get('/list', inspectionController.list);
+router.get('/report', inspectionController.report);
+
 
 module.exports = router;

@@ -58,7 +58,7 @@ exports.sendForMLVerification = async (req, res) => {
     );
 
     const mlDetections = mlResponseRaw.data.detections;
-    const annotatedPath = mlDetections.annotated_image_path || mlResponseRaw.data.annotated_image_url;
+    const annotatedPath = mlResponseRaw.data.annotated_image_url;
     const publicAnnotatedUrl = `https://ocr-ic-display.onrender.com${annotatedPath}`;
 
     // Choose text from the first detection with highest confidence as extractedMarking (fallback: "")
@@ -108,3 +108,62 @@ exports.report = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Dashboard summary route
+exports.dashboard = async (req, res) => {
+  try {
+    // Aggregation for total, fake, genuine
+    const stats = await ICInspection.aggregate([
+      {
+        $group: {
+          _id: "$result", // fake/genuine (string result)
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Recent submissions
+    const recent = await ICInspection.find({})
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('icPartNumber extractedMarking isGenuine result annotatedImageUrl createdAt');
+
+    // Top IC part numbers (by submission count)
+    const topParts = await ICInspection.aggregate([
+      {
+        $group: {
+          _id: "$icPartNumber",
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+
+    res.json({
+      stats,           // [{_id: "genuine", count: 12}, {_id: "fake", count: 8}]
+      recent,          // array of last 10 submissions
+      topParts         // [{_id: "LM324N", count: 5}, ...]
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// List all/filtered inspections (e.g., by date, isGenuine, result)
+exports.list = async (req, res) => {
+  try {
+    const { isGenuine, result, icPartNumber } = req.query;
+    const filter = {};
+    if (typeof isGenuine !== 'undefined') filter.isGenuine = isGenuine === 'true';
+    if (result) filter.result = result;
+    if (icPartNumber) filter.icPartNumber = icPartNumber;
+
+    const inspections = await ICInspection.find(filter)
+      .sort({ createdAt: -1 });
+    res.json({ inspections });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
