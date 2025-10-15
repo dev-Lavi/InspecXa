@@ -25,11 +25,7 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 
 // Enable CORS for frontend
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*', // Set your frontend URL in .env for security
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  credentials: true,
-}));
+app.use(cors());
 
 // JSON parser
 app.use(express.json({ limit: '10mb' }));
